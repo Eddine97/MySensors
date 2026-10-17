@@ -100,6 +100,7 @@
 #endif
 
 #include "hal/architecture/MyHwHAL.cpp"
+#include "hal/SPIBus.cpp"
 
 // commonly used macros, sometimes missing in arch definitions
 #if !defined(_BV)

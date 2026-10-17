@@ -22,6 +22,10 @@
 
 #include "RF24.h"
 
+#if defined(MY_RF24_CS_PIN) && defined(MY_OTA_FLASH_SS)
+#include "hal/SPIBus.h"
+#endif
+
 // debug output
 #if defined(MY_DEBUG_VERBOSE_RF24)
 #define RF24_DEBUG(x,...)	DEBUG_OUTPUT(x, ##__VA_ARGS__)	//!< DEBUG
@@ -47,7 +51,20 @@ LOCAL void RF24_csn(const bool level)
 #if defined(__linux__)
 	(void)level;
 #else
-	hwDigitalWrite(MY_RF24_CS_PIN, level);
+	// Use the SPI bus arbiter when both CS pins are defined, so that
+	// the flash is deselected before we talk to the radio. When only
+	// the radio is present, fall back to a direct CS write.
+// Dans RF24.cpp, remplacer le #if par :
+#if defined(MY_RF24_CS_PIN) && defined(MY_OTA_FLASH_SS) && \
+    !defined(MY_OTA_FLASH_ON_SEPARATE_SPI_BUS)
+    if (level == LOW) {
+        hwSpiSelectDevice(SPI_DEV_RF24);
+    } else {
+        hwSpiSelectDevice(SPI_DEV_NONE);
+    }
+#else
+    hwDigitalWrite(MY_RF24_CS_PIN, level);
+#endif
 #endif
 }
 
